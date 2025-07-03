@@ -59,8 +59,8 @@ int main(int argc, char* argv[]) {
     // BootstrapExample(1<<10);
     // BootstrapExample(1<<11);
     // BootstrapExample(1<<14);
-    // BootstrapExample(1<<15);
-    BootstrapExample(1<<16);
+    BootstrapExample(1<<15);
+    // BootstrapExample(1<<16);
 }
 
 void ApproxModReduction(uint32_t numSlots) {
@@ -83,9 +83,9 @@ void ApproxModReduction(uint32_t numSlots) {
 
     // All modes are supported for 64-bit CKKS bootstrapping.
     ScalingTechnique rescaleTech = FLEXIBLEAUTO;
-    usint dcrtBits               = 59;
+    usint dcrtBits               = 52;
     // usint dcrtBits               = 50;
-    usint firstMod               = 60;
+    usint firstMod               = 55;
 
     parameters.SetScalingModSize(dcrtBits);
     parameters.SetScalingTechnique(rescaleTech);
@@ -100,9 +100,10 @@ void ApproxModReduction(uint32_t numSlots) {
 
     
     // uint32_t levelsAvailableAfterBootstrap = 10;
-    uint32_t levelsAvailableAfterBootstrap = 20;
+    // uint32_t levelsAvailableAfterBootstrap = 20;
     // uint32_t levelsAvailableAfterBootstrap = 30;
-    usint depth = levelsAvailableAfterBootstrap + FHECKKSRNS::GetBootstrapDepth(levelBudget, secretKeyDist);
+    // usint depth = levelsAvailableAfterBootstrap + FHECKKSRNS::GetBootstrapDepth(levelBudget, secretKeyDist);
+    usint depth = 29;
     parameters.SetMultiplicativeDepth(depth);
 
     // Generate crypto context.
@@ -181,10 +182,10 @@ void BootstrapExample(uint32_t numSlots) {
     * or 256-bit security, respectively. If you choose one of these as your security level,
     * you do not need to set the ring dimension.
     */
-    // parameters.SetSecurityLevel(HEStd_128_classic);
-    parameters.SetSecurityLevel(HEStd_NotSet);
-    parameters.SetRingDim(1 << 17);
-    // parameters.SetRingDim(1 << 16);
+    parameters.SetSecurityLevel(HEStd_128_classic);
+    // parameters.SetSecurityLevel(HEStd_NotSet);
+    // parameters.SetRingDim(1 << 17);
+    parameters.SetRingDim(1 << 16);
     // parameters.SetRingDim(1 << 12);
 
     /*  A3) Key switching parameters.
@@ -194,7 +195,7 @@ void BootstrapExample(uint32_t numSlots) {
     */
     // parameters.SetNumLargeDigits(6);
     // parameters.SetNumLargeDigits(4);
-    parameters.SetNumLargeDigits(3);
+    parameters.SetNumLargeDigits(10);
     // parameters.SetNumLargeDigits(2);
     parameters.SetKeySwitchTechnique(HYBRID);
 
@@ -211,9 +212,9 @@ void BootstrapExample(uint32_t numSlots) {
 #else
     // All modes are supported for 64-bit CKKS bootstrapping.
     ScalingTechnique rescaleTech = FLEXIBLEAUTO;
-    usint dcrtBits               = 59;
+    usint dcrtBits               = 52;
     // usint dcrtBits               = 50;
-    usint firstMod               = 60;
+    usint firstMod               = 55;
 #endif
 
     parameters.SetScalingModSize(dcrtBits);
@@ -230,7 +231,7 @@ void BootstrapExample(uint32_t numSlots) {
     */
     // std::vector<uint32_t> levelBudget = {3, 3};
     // std::vector<uint32_t> levelBudget = {3, 4};
-    std::vector<uint32_t> levelBudget = {4, 4};
+    std::vector<uint32_t> levelBudget = {4, 3};
     // std::vector<uint32_t> levelBudget = {5, 5};
 
     /* We give the user the option of configuring values for an optimization algorithm in bootstrapping.
@@ -257,9 +258,10 @@ void BootstrapExample(uint32_t numSlots) {
     // uint32_t levelsAvailableAfterBootstrap = 36;
     // uint32_t levelsAvailableAfterBootstrap = 39;
     // uint32_t levelsAvailableAfterBootstrap = 40;
-    uint32_t levelsAvailableAfterBootstrap = 45;
+    // uint32_t levelsAvailableAfterBootstrap = 45;
     // uint32_t levelsAvailableAfterBootstrap = 50;
-    usint depth = levelsAvailableAfterBootstrap + FHECKKSRNS::GetBootstrapDepth(levelBudget, secretKeyDist);
+    // usint depth = levelsAvailableAfterBootstrap + FHECKKSRNS::GetBootstrapDepth(levelBudget, secretKeyDist);
+    usint depth = 29;
     parameters.SetMultiplicativeDepth(depth);
 
     // Generate crypto context.
@@ -499,7 +501,13 @@ void BootstrapExample(uint32_t numSlots) {
     // std::cout << "Initial number of levels remaining: " << depth - ciph->GetLevel() << std::endl;
 
     // Step 5: Perform the bootstrapping operation. The goal is to increase the number of levels remaining for HE computation.
+    // Benchmark EvalBootstrapGPU
+    #include <chrono>
+    auto start = std::chrono::high_resolution_clock::now();
     auto ciphertextAfter = cryptoContext->EvalBootstrapGPU(ciph, gpu_context);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    std::cout << "EvalBootstrapGPU time: " << duration << " ms" << std::endl;
 
     // This should always pass, but don't want to wait.
     // {
@@ -525,5 +533,10 @@ void BootstrapExample(uint32_t numSlots) {
     // std::cout << "Output after bootstrapping \n\t" << result << std::endl;
     std::cout << "Output precision after bootstrapping \n\t" << result->GetEncodingParams()->GetPlaintextModulus() - result->GetLogError() << std::endl;
 
+    std::vector<double> real_val = result->GetRealPackedValue();
+    for (size_t i = 0; i < numSlots; i++) {
+        assert (std::abs(real_val[i] - x[i]) < 5e-3);
+    }
+    
     // return;
 }

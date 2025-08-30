@@ -992,7 +992,7 @@ Ciphertext<DCRTPoly> FHECKKSRNS::EvalBootstrapGPU(ConstCiphertext<DCRTPoly> ciph
         ctScaledUp->SetLevel(L0 - ctScaledUp->GetElements()[0].GetNumOfElements());
 
         // Step 3: Bootstrap the initial ciphertext.
-        auto ctInitialBootstrap = cc->EvalBootstrap(ciphertext, numIterations - 1, precision);
+        auto ctInitialBootstrap = EvalBootstrapGPU(ciphertext, gpu_context, numIterations - 1, precision);
         cc->GetScheme()->ModReduceInternalInPlace(ctInitialBootstrap, BASE_NUM_LEVELS_TO_DROP);
 
         // Step 4: Scale up by powerOfTwoModulus.
